@@ -1,0 +1,8 @@
+- hosts: all
+  gather_facts: False
+  become: yes
+  tasks:
+  - name: print out package name
+    debug: "msg={{ package }}"
+  - name: installing package
+    apt: pkg={{ package }} state=present

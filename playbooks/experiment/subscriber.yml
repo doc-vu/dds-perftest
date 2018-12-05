@@ -1,0 +1,64 @@
+---
+- hosts: all
+  gather_facts: False
+  vars:
+    - log_dir: /home/riaps/log
+    - scripts_dir: /home/riaps/workspace/siemens
+    - nic: eth0
+    - transport: UDPv4
+    - numPublishers: 1
+    - sidMultiSubTest: 0
+    - multiSubTest: False
+    - keyed: False
+    - detachedMode: False
+    - extra_params: ''
+    - base_command: "./perftest_cpp -sub -cpu  -noPrintIntervals -nic {{ nic }} -transport {{ transport }} -numPublishers {{ numPublishers }}"
+  tasks:
+    #- name: ensure log dir exists
+    #  file: path={{ log_dir }} state=directory recurse=yes
+
+    #- name: ensure log dir for ts data exists
+    #  file: path={{ log_dir }}/ts state=directory recurse=yes
+
+    #- name: ensure cmd dir for perftest commands exists
+    #  file: path={{ log_dir }}/cmd state=directory recurse=yes
+
+    #- name: ensure err dir for perftest commands exists
+    #  file: path={{ log_dir }}/err state=directory recurse=yes
+
+    - name: delete old log files
+      shell: cd {{ log_dir }} && find . -name "*.csv" -type f -delete
+
+    - name: get hostname
+      command: hostname
+      register: hostname 
+
+    - name: overwrite sidMultiSubTest
+      set_fact: sidMultiSubTest={{ play_hosts.index(inventory_hostname) }}
+      when: multiSubTest
+
+    - name: add sidMultiSubTest
+      set_fact: 
+        base_command: "{{ base_command + ' -sidMultiSubTest ' + sidMultiSubTest|string }}" 
+
+    - name: add cft filters if keyed
+      set_fact: 
+        base_command: "{{ base_command + ' -keyed ' + ' -cft ' + sidMultiSubTest|string }}" 
+      when: keyed 
+
+    - name: add additional parameters
+      set_fact: 
+        base_command: "{{ base_command + ' ' + extra_params }}" 
+
+    - name: print debug message
+      debug: msg={{ base_command }}
+  
+    - name: start sub perftest (attached)
+      become: yes
+      shell: '{{ scripts_dir }}/execute_perftest_rt.sh "{{ base_command }}" sub_{{ hostname.stdout }} {{ log_dir}}'
+      when: not detachedMode
+
+    - name: start sub perftest (detached)
+      become: yes
+      shell: "nohup {{ scripts_dir }}/execute_perftest_rt.sh '{{ base_command }}' sub_{{ hostname.stdout }} {{ log_dir}} &"
+      when: detachedMode

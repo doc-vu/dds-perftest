@@ -1,0 +1,25 @@
+---
+- name: install ntp
+  become: true 
+  package: name=ntp state=present 
+
+- name: add local NTP master
+  become: true
+  lineinfile:
+    dest: /etc/ntp.conf
+    insertbefore: '^pool 0.ubuntu.pool.ntp.org'
+    line: 'server {{ NTP_SERVER }}  prefer iburst'
+    state: present
+  when: ntp_client
+
+- name: comment out remote NTP servers 
+  become: true
+  replace:
+    dest: /etc/ntp.conf
+    regexp: '^pool'
+    replace: '#pool'
+  when: ntp_client
+
+- name: restart ntp service
+  become: true
+  service: name=ntp state=restarted 

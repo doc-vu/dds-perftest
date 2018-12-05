@@ -1,0 +1,90 @@
+---
+- hosts: all
+  gather_facts: False
+  vars:
+    - log_dir: /home/riaps/log
+    - scripts_dir: /home/riaps/workspace/siemens
+    - nic: eth0
+    - transport: UDPv4
+    - numSubscribers: 1
+    - pidMultiPubTest: 0
+    - multiPubTest: False
+    - batchSize: 0
+    - dataLen: 100
+    - numIter: -1
+    - latencyCount: -1
+    - latencyTest: False
+    - keyed: False
+    - executionTime: 0 
+    - detachedMode: False
+    - extra_params: ''
+    - base_command: "./perftest_cpp -pub -cpu -noPrintIntervals -nic {{ nic }} -transport {{ transport }} -dataLen {{ dataLen }} -batchSize {{ batchSize }} -numSubscribers {{ numSubscribers }}"
+  tasks:
+    #- name: ensure log dir exists
+    #  file: path={{ log_dir }} state=directory recurse=yes
+
+    #- name: ensure log dir for ts data exists
+    #  file: path={{ log_dir }}/ts state=directory recurse=yes
+
+    #- name: ensure cmd dir for perftest commands exists
+    #  file: path={{ log_dir }}/cmd state=directory recurse=yes
+
+    #- name: ensure err dir for perftest commands exists
+    #  file: path={{ log_dir }}/err state=directory recurse=yes
+
+    - name: delete old log files
+      shell: cd {{ log_dir }} && find . -name "*.csv" -type f -delete
+
+    - name: get hostname
+      command: hostname
+      register: hostname 
+
+    - name: set pidMultiPubTest
+      set_fact: pidMultiPubTest={{ play_hosts.index(inventory_hostname) }}
+      when: multiPubTest
+
+
+    - name: update base_command with numIter
+      set_fact: 
+        base_command: "{{ base_command + ' -numIter ' + numIter }}" 
+      when: numIter>0
+
+    - name: update base_command with latencyTest flag
+      set_fact: 
+        base_command: "{{ base_command  if not latencyTest else  base_command + ' -latencyTest ' }}"   
+
+    - name: update base_command with latencyCount
+      set_fact: 
+        base_command: "{{ base_command + ' -latencyCount ' + latencyCount }}" 
+      when: latencyCount>0
+
+    - name: update base_command with executionTime
+      set_fact: 
+        base_command: "{{ base_command + ' -executionTime ' + executionTime }}" 
+      when: executionTime>0
+
+    - name: add pidMultiPubTest
+      set_fact: 
+        base_command: "{{ base_command + ' -pidMultiPubTest ' + pidMultiPubTest|string }}" 
+
+    - name: add number of instances when keyed
+      set_fact: 
+        base_command: "{{ base_command + ' -keyed ' + ' -instances ' + numSubscribers  }}" 
+      when: keyed
+
+    - name: add additional parameters
+      set_fact: 
+        base_command: "{{ base_command + ' ' + extra_params }}" 
+
+    - name: print debug message
+      debug: msg={{ base_command }}
+
+    - name: start pub perftest (attached)
+      become: yes
+      shell: '{{ scripts_dir }}/execute_perftest_rt.sh "{{ base_command }}" pub_{{ hostname.stdout }} {{ log_dir}}'
+      when: not detachedMode
+
+    - name: start pub perftest (detached)
+      become: yes
+      shell: 'nohup {{ scripts_dir }}/execute_perftest_rt.sh "{{ base_command }}" pub_{{ hostname.stdout }} {{ log_dir}} &'
+      when: detachedMode

@@ -1,0 +1,20 @@
+---
+- name: create installation directory
+  file: path={{ INSTALL_DIR }} state=directory recurse=yes
+
+- name: install unzip
+  become: true
+  package: name=unzip state=present 
+
+- name: copy dds
+  unarchive:
+    src: ../lib/rti_connext_dds-5.3.1.zip
+    dest: '{{ INSTALL_DIR }}'
+
+- name: set $NDDSHOME
+  lineinfile:
+    state: present
+    dest: '/home/{{ ansible_ssh_user }}/.profile'
+    line: 'export NDDSHOME={{ NDDSHOME }}'
+    insertafter: 'EOF'
+    regexp: 'export NDDSHOME={{ NDDSHOME }}'

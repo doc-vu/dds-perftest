@@ -1,0 +1,9 @@
+---
+- hosts: all
+  gather_facts: False
+  tasks:
+  - name: kill process
+    command: pkill -f "{{ pattern }}"
+    register: res
+    failed_when: res.rc > 1
+    #with_items: "pattern.split(',')"

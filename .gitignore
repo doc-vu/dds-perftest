@@ -1,0 +1,15 @@
+__pycache__/
+.Python
+[Bb]in
+[Ii]nclude
+[Ll]ib
+/build/
+build/
+.settings/
+libs/
+plots/
+logs/
+log/
+share/
+pip-selfcheck.json
+offsets.csv

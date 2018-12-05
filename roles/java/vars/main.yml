@@ -1,0 +1,5 @@
+LIB_PATH: /home/kharesp/workspace/ansible/bbb/lib
+JDK: jdk-8u181-linux-arm32-vfp-hflt.tar.gz
+VERSION: 8
+INSTALL_DIR: /home/riaps/dev_environ/java
+JAVA_HOME: '{{ INSTALL_DIR }}/jdk{{ VERSION }}'

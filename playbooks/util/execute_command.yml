@@ -1,0 +1,12 @@
+---
+- hosts: all
+  become: yes
+  gather_facts: False
+  tasks:
+  - name: command string to be executed
+    debug: "msg={{ command }}"
+  - name: execute command
+    shell:  "{{ command }}"
+    register: res
+  - name: print command stdout
+    debug: "msg={{ res.stdout }}"

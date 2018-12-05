@@ -1,0 +1,8 @@
+---
+- name: check if java is installed
+  shell: . /home/{{ ansible_ssh_user }}/.profile && java -version
+  register: result
+  ignore_errors: true
+
+- include: install.yml
+  when: result.rc != 0   

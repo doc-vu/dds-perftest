@@ -1,0 +1,35 @@
+---
+- name: create installation directory
+  file: path={{ INSTALL_DIR }} state=directory recurse=yes
+
+- name: debug path
+  debug: msg=lib/{{ JDK }}
+
+- name: copy jdk
+  copy:
+    src: '{{ LIB_PATH }}/{{ JDK }}'
+    dest: '{{ INSTALL_DIR }}'
+
+- name: extract jdk 
+  shell: "mkdir jdk{{ VERSION }}  && tar -xvzf {{ JDK }} -C jdk{{ VERSION }} --strip-components 1"
+  args:
+    chdir: "{{ INSTALL_DIR }}"
+
+- name: set $JAVA_HOME
+  lineinfile:
+    state: present
+    dest: '/home/{{ ansible_ssh_user }}/.profile'
+    line: 'export JAVA_HOME={{ JAVA_HOME }}'
+    insertafter: 'EOF'
+    regexp: 'export JAVA_HOME={{ JAVA_HOME }}'
+
+- name: set $PATH 
+  lineinfile:
+    state: present
+    dest: '/home/{{ ansible_ssh_user }}/.profile'
+    line: 'export PATH=$PATH:$JAVA_HOME/bin'
+    insertafter: 'EOF'
+    regexp: 'export PATH=\$PATH:\$JAVA_HOME/bin'
+
+- name: remove compressed jdk
+  file: path={{ INSTALL_DIR }}/{{ JDK }} state=absent 

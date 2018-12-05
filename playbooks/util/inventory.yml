@@ -1,0 +1,18 @@
+---
+- hosts: all
+  vars:
+    - output_file: /home/kharesp/workspace/ansible/bbb/inventory/nodes
+  tasks:
+    - name: get hostname
+      shell: hostname 
+      register: result
+    - name: print inventory_file 
+      debug: msg={{output_file}}
+    - name: register ip
+      set_fact: ip={{ ansible_ssh_host }}
+    - name: log hostname
+      lineinfile:
+        line: "{{ result.stdout }} ansible_ssh_host={{ ip }}"
+        insertafter: EOF
+        dest: "{{ output_file }}"
+      delegate_to: 127.0.0.1

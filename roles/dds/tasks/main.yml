@@ -1,0 +1,7 @@
+---
+- name: check if dds is installed
+  shell: . /home/{{ ansible_ssh_user }}/.profile && echo $NDDSHOME
+  register: result
+
+- include: install.yml
+  when: result.stdout == ''

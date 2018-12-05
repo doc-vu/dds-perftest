@@ -1,0 +1,18 @@
+---
+- hosts: all
+  gather_facts: False
+  tasks:
+    - name: get dest parent directory
+      set_fact: 
+        dest_parent_dir: "{{ dest.split('/')[0:-1]|join('/') }}"
+
+    - name: ensure dest parent directory exists
+      file: path={{ dest_parent_dir }} state=directory recurse=yes 
+
+    - name: copy file 
+      copy: src={{ src }} dest={{ dest }}
+      when: mode is undefined
+
+    - name: copy file 
+      copy: src={{ src }} dest={{ dest }} mode={{ mode }}
+      when: mode is defined
